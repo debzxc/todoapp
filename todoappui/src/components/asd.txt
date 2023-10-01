@@ -1,0 +1,96 @@
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    axios
+      .post("http://localhost:3001/", {
+        email,
+        password,
+      })
+      .then((res) => {
+        if (res.data.Status === "Success") {
+          if (res.data.role === "admin") {
+            Navigate("/Admin");
+          } else {
+            Navigate("/Home");
+          }
+        }
+      })
+      .catch((err) => console.error(err));
+  };
+
+
+   Date: { type: Date, required: true },
+
+
+               <div className="card-body">
+                    <small className="card-meta mb-2">Thought Leadership</small>
+                    <h4 className="card-title mt-0 ">
+                      <a
+                        className="text-dark"
+                      >
+                        Web Developmet Lorem Ipsum Sit Amet Consectetur dipisi?
+                      </a>
+                    </h4>
+                    <small>
+                      <i className="far fa-clock"></i> October 15, 2020
+                    </small>
+                  </div>
+                  <div className="card-footer">
+                    <div className="media">
+                      <div className="media-body">
+                        <h6 className="my-0 text-dark d-block">Oz Coruhlu</h6>
+                        <small>Director of UI/UX</small>
+                      </div>
+                    </div>
+                  </div>
+
+
+
+card
+
+
+
+                     {todos.map((todo) => {
+                    const date = new Date(todo.date);
+
+                    // Define an array for month names
+                    const monthNames = [
+                      "January",
+                      "February",
+                      "March",
+                      "April",
+                      "May",
+                      "June",
+                      "July",
+                      "August",
+                      "September",
+                      "October",
+                      "November",
+                      "December",
+                    ];
+
+                    // Extract the month, day, and year from the Date object
+                    const month = monthNames[date.getMonth()];
+                    const day = date.getDate();
+                    const year = date.getFullYear();
+
+                    // Create the formatted date string
+                    const formattedDate = `${month} ${day}, ${year}`;
+                    return (
+                    );
+                  })}
+
+
+
+                  <div key={todo._id} className="card">
+                        <div className="card-body">
+                          <h4 className="card-title mt-0">
+                            <a className="text-dark">{todo.title}</a>
+                          </h4>
+                          <small>
+                            <i className="far fa-clock"></i> {formattedDate}
+                          </small>
+                          <div className="content-body">
+                            <p>- {todo.description}</p>
+                          </div>
+                        </div>
+                      </div>

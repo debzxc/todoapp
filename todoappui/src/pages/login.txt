@@ -1,0 +1,44 @@
+<form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <h3>Sign in</h3>
+                <label htmlFor="exampleInputEmail1">Email address</label>
+                <input
+                  type="email"
+                  className="form-control"
+                  id="exampleInputEmail1"
+                  aria-describedby="emailHelp"
+                  placeholder="Enter email"
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <small id="emailHelp" className="form-text text-muted">
+                  <span className="span">
+                    We'll never share your email with anyone else.
+                  </span>
+                </small>
+              </div>
+              <div className="form-group">
+                <label htmlFor="exampleInputPassword1">Password</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  id="exampleInputPassword1"
+                  placeholder="Password"
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              {/* <div className="form-group form-check"></div> */}
+              &nbsp;
+              <div className="btn-link">
+                <button type="submit" className="btn btn-dark">
+                  Login
+                </button>
+              </div>
+              <br></br>
+              <div className="link">
+                <span className="account-text">Don't have an Account? </span>
+                &nbsp;
+                <Link to="/Register" className="custom-link">
+                  Sign Up
+                </Link>
+              </div>
+            </form>
