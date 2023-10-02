@@ -10,6 +10,7 @@ const http = require("http");
 const Token = require("./models/token");
 const sendEmail = require("./utils/sendEmail");
 const crypto = require("crypto");
+require("dotenv").config();
 
 const app = express();
 // var router = express.Router();
@@ -17,7 +18,7 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://127.0.0.1:5173"],
+    origin: ["http://localhost:5173"],
     methods: ["GET", "POST", "DELETE"],
     credentials: true,
   })
@@ -131,8 +132,8 @@ app.post("/Register", async (req, res) => {
 
       await token.save();
 
-      // const url = `${process.env.BASE_URL}Register/${user._id}/verify/${token.token}`;
-      const url = `http://localhost:3001/Register/${user._id}/verify/${token.token}`;
+      const url = `${process.env.BASE_URL}Register/${user.id}/verify/${token.token}`;
+
       await sendEmail(user.email, "Verify Email", url);
 
       res
