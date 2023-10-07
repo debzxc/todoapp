@@ -8,6 +8,7 @@ import Admin from "./components/admin/Admin";
 import Schedule from "./pages/user/Schedules";
 import EmailVerify from "./pages/EmailVerify/emailVerify";
 import LandingPage from "./pages/LandingPage";
+import VerifyEmail from "./pages/EmailVerify/verifyEmail";
 
 function App() {
   return (
@@ -21,8 +22,8 @@ function App() {
           <Route path="/Admin" element={<Admin />}></Route>
           <Route path="/Home/Schedule" element={<Schedule />}></Route>
           <Route
-            path="/Register/:id/verify/:token"
-            element={<EmailVerify />}
+            path="/users/:id/verify/:token"
+            element={<VerifyEmail />}
           ></Route>
         </Routes>
       </BrowserRouter>

@@ -7,13 +7,14 @@ import "./css/home.css";
 import DatePicker from "react-datepicker";
 import axios from "axios";
 import "react-datepicker/dist/react-datepicker.css";
+import { Bar } from "react-chartjs-2";
 
 export default function Home() {
   const [taskNo] = useState(1);
   const [date, setSelectedDate] = useState();
   const [title, setTitle] = useState();
   const [description, setDescription] = useState();
-
+  const [count, setCount] = useState(null);
   const [todos, setTodos] = useState([]);
 
   const Submit = (e) => {
@@ -45,6 +46,18 @@ export default function Home() {
       })
       .catch((err) => console.log(err));
   };
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:3001/Count")
+      .then((response) => {
+        const { count } = response.data;
+        setCount(count);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
+  }, []);
 
   useEffect(() => {
     axios
@@ -91,9 +104,11 @@ export default function Home() {
 
     return (
       <div key={todo._id} className="sched-cards">
-        <div className="task-delete">
+        <div className="task-buttons">
+          <button className="e-btn">✎</button>
+          <button className="c-btn">✔</button>
           <button className="x-btn" onClick={(e) => handleDelete(todo._id)}>
-            X
+            ✖
           </button>
         </div>
         <div className="task">
@@ -168,6 +183,18 @@ export default function Home() {
               required
             ></textarea>
           </form>
+        </div>
+        <div className="weekly-activities">
+          <div className="activities">
+            <span className="this-activities">Activity</span>
+            <br></br>
+            <hr></hr>
+            <small className="numActivities1">Activity 📓 {count}</small>
+            <br></br>
+            <small className="numActivities2">Activity ✔ 4</small>
+            <br></br>
+            <small className="numActivities3">Activity ✖ 4</small>
+          </div>
         </div>
         <div className="schedules">{todoData}</div>
       </div>

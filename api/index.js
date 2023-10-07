@@ -10,12 +10,15 @@ const http = require("http");
 const Token = require("./models/token");
 const sendEmail = require("./utils/sendEmail");
 const crypto = require("crypto");
+const Router = express.Router();
+
 require("dotenv").config();
 
 const app = express();
-// var router = express.Router();
+var router = express.Router();
 
 app.use(express.json());
+app.use("/api", Router);
 app.use(
   cors({
     origin: ["http://localhost:5173"],
@@ -80,34 +83,6 @@ app.post("/Login", (req, res) => {
   });
 });
 
-// app.post('/Register', async (req, res) => {
-//     const { email, firstname, lastname, password } = req.body;
-
-//     UserModel.findOne({ email })
-//         .then(existingUser => {
-//             if (existingUser) {
-
-//                 res.json({ message: 'Email already exists' });
-//             } else {
-
-//                 bcrypt.hash(password, 10)
-//                     .then(hash => {
-//                         UserModel.create({ email, firstname, lastname, password: hash })
-//                             .then((user) => {
-//                                 const token = new Token({
-//                                     userId: user._id,
-//                                     token: crypto.randomBytes(32).toString("hex")
-//                                 }).save()
-//                                 const url = `${process.env.BASE_URL}users/${user_id}/verify/${token.token}`;
-//                                 await sendEmail(user.email, "Verify Email", url);
-//                             })
-//                             .catch(err => res.json(err))
-//                     }).catch(err => res.json(err))
-//             }
-//         })
-//         .catch(err => res.json(err))
-// })
-
 app.post("/Register", async (req, res) => {
   const { email, firstname, lastname, password } = req.body;
 
@@ -125,27 +100,23 @@ app.post("/Register", async (req, res) => {
         password: hash,
       });
 
-      const token = new Token({
+      const token = await new Token({
         userId: user._id,
         token: crypto.randomBytes(32).toString("hex"),
-      });
-
-      await token.save();
-
-      const url = `${process.env.BASE_URL}Register/${user.id}/verify/${token.token}`;
-
-      await sendEmail(user.email, "Verify Email", url);
+      }).save();
+      const url = `${process.env.URL}users/${user.id}/verify/${token.token}`;
+      await sendEmail(user.email, "Verify your Email", url);
 
       res
         .status(200)
         .send({ message: "An email has been sent please verify your account" });
     }
   } catch (err) {
-    res.json(err);
+    res.json({ Status: err });
   }
 });
 
-app.get("/:id/verify/:token", async (req, res) => {
+router.get("/:id/verify/:token", async (req, res) => {
   try {
     const user = await UserModel.findByOne({
       _id: req.params.id,
@@ -169,6 +140,11 @@ app.get("/:id/verify/:token", async (req, res) => {
 app.get("/Home", (req, res) => {
   UserSchedules.find({})
     .then((todos) => res.json(todos))
+    .catch((err) => console.log(err));
+});
+app.get("/Count", (req, res) => {
+  UserSchedules.countDocuments({})
+    .then((count) => res.json({ count }))
     .catch((err) => console.log(err));
 });
 

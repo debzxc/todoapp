@@ -7,6 +7,6 @@ const ScheduleSchema = new mongoose.Schema({
   description: { type: String, required: true },
 });
 
-const UserSchedules = mongoose.model("todos", ScheduleSchema);
+const DoneSchedules = mongoose.model("todos", ScheduleSchema);
 
-module.exports = UserSchedules;
+module.exports = DoneSchedules;
