@@ -83,3 +83,83 @@ app.get("/:id/verify/:token", async (req, res) => {
 //         })
 //         .catch(err => res.json(err))
 // })
+
+app.post("/Home", async (req, res) => {
+  try {
+    const latestTask = await UserSchedules.findOne(
+      {},
+      {},
+      { sort: { taskNo: -1 } }
+    );
+
+    let newTaskNo = 1;
+
+    if (latestTask && latestTask.taskNo) {
+      newTaskNo = latestTask.taskNo + 1;
+    }
+
+    const newTask = {
+      taskNo: newTaskNo,
+      title: req.body.title,
+      date: req.body.date,
+      description: req.body.description,
+    };
+
+    const todos = await UserSchedules.create(newTask);
+    res.json(todos);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+app.delete("/deleteTask/:taskNo", async (req, res) => {
+  const taskNo = req.params.taskNo;
+  try {
+    const deletedTask = await UserSchedules.findByIdAndDelete(taskNo);
+    if (!deletedTask) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+    res.json(deletedTask);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+<div className="task">
+  <h4 className="sched-task">{todo.title}</h4>
+  <hr></hr>
+  <h5 className="task-day">{whatDay}</h5>
+  <hr></hr>
+  <small>
+    <i className="task-date"></i>
+    {formattedDate}
+  </small>
+  <hr></hr>
+  <div style={{ wordWrap: "break-word" }} className="task-todo">
+    <p>{todo.description}</p>
+  </div>
+  <hr></hr>
+</div>;
+
+const id = req.params.id;
+UserSchedules.findIdAndUpdate(
+  { taskNo: id },
+  {
+    date: req.body.date,
+    title: req.body.title,
+    description: req.body.description,
+  }
+).then((result) => result.json(result));
+
+function simpleArraySum(ar) {
+  // Write your code here
+  let sumOfElements = 0;
+  for (let element of ar) {
+    sumOfElements += element;
+  }
+  return sumOfElements;
+}
+const n = 6;
+const arr = [1, 2, 3, 4, 10, 11];
+const result = simpleArraySum(arr);
+console.log(result);

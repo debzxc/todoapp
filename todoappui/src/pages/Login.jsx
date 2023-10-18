@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import "./css/login.css";
 import TaskImg2 from "../assets/listed.png";
+
 // import Cookies from "universal-cookie";
 
 export default function Login() {
@@ -27,7 +28,7 @@ export default function Login() {
       })
       .then((res) => {
         console.log(res.data);
-        if (res.data.Status === "Success") {
+        if (res.data.status === "Success") {
           if (res.data.role === "admin") {
             Navigate("/Admin");
           } else if (res.data.role === "Visitor") {
@@ -38,7 +39,8 @@ export default function Login() {
         } else if (res.data.message === "Password incorrect") {
           alert("Password is incorrect");
         } else {
-          alert("No record Existed");
+          console.log("ERROR");
+          alert("ERROR");
         }
       })
       .catch((err) => console.error(err));

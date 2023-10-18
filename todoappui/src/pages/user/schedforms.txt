@@ -316,3 +316,79 @@ h1 {
         min-width: 196px;
     }
 }
+
+# askdhajkhsdasdsd MAIN
+
+  const todoData = todos.map((todo, index) => {
+    const date = new Date(todo.date);
+
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    const perDay = [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ];
+
+    const sevenDays = perDay[date.getDay()];
+    const month = monthNames[date.getMonth()];
+    const day = date.getDate();
+    const year = date.getFullYear();
+
+    const formattedDate = `${month} ${day}, ${year}`;
+    const whatDay = `${sevenDays}`;
+
+    return (
+      <>
+        <div key={todo._id} className="sched-cards">
+          <div className="task-buttons">
+            <div className="edit-button">
+              <Link className="e-btn" to={`/Update/${todo.taskNo}/${todo._id}`}>
+                {" "}
+                ✎
+              </Link>
+            </div>
+
+            <button className="c-btn" onClick={(e) => handleCheck(todo._id)}>
+              ✔
+            </button>
+            <button className="x-btn" onClick={(e) => handleDelete(todo._id)}>
+              ✖
+            </button>
+          </div>
+          <div className="task">
+            <h4>📍 Activity # {index + 1}</h4>
+            <hr></hr>
+            <h4 className="sched-task">{todo.title}</h4>
+            <hr></hr>
+            <h5 className="task-day">{whatDay}</h5>
+            <hr></hr>
+            <small>
+              <i className="task-date"></i>
+              {formattedDate}
+            </small>
+            <hr></hr>
+            <div className="task-todo">{todo.description}</div>
+            <hr></hr>
+          </div>
+        </div>
+      </>
+    );
+  });

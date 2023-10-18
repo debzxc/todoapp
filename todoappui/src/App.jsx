@@ -8,7 +8,9 @@ import Admin from "./components/admin/Admin";
 import Schedule from "./pages/user/Schedules";
 import EmailVerify from "./pages/EmailVerify/emailVerify";
 import LandingPage from "./pages/LandingPage";
-import VerifyEmail from "./pages/EmailVerify/verifyEmail";
+import EmailVerification from "./pages/EmailVerify/verifyEmail";
+import UpdateSchedules from "./pages/UpdateSchedules";
+import DashBoard from "./pages/DashBoard";
 
 function App() {
   return (
@@ -23,7 +25,11 @@ function App() {
           <Route path="/Home/Schedule" element={<Schedule />}></Route>
           <Route
             path="/users/:id/verify/:token"
-            element={<VerifyEmail />}
+            element={<EmailVerify />}
+          ></Route>
+          <Route
+            path="/Update/:taskNo/:id"
+            element={<UpdateSchedules />}
           ></Route>
         </Routes>
       </BrowserRouter>

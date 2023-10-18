@@ -11,6 +11,8 @@ const Token = require("./models/token");
 const sendEmail = require("./utils/sendEmail");
 const crypto = require("crypto");
 const Router = express.Router();
+const session = require("express-session");
+const mongoDBSession = require("connect-mongodb-session")(session);
 
 require("dotenv").config();
 
@@ -22,13 +24,29 @@ app.use("/api", Router);
 app.use(
   cors({
     origin: ["http://localhost:5173"],
-    methods: ["GET", "POST", "DELETE"],
+    methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
   })
 );
 app.use(cookieParser());
 
-mongoose.connect("mongodb://127.0.0.1:27017/todoappdb");
+const mongoURI = "mongodb://127.0.0.1:27017/todoappdb";
+
+mongoose.connect(mongoURI).then((res) => console.log("Connected"));
+
+const store = new mongoDBSession({
+  uri: mongoURI,
+  collection: "mySession",
+});
+
+app.use(
+  session({
+    secret: "secret key",
+    resave: false,
+    saveUninitialized: false,
+    store: store,
+  })
+);
 
 const varifyUser = (req, res, next) => {
   const token = req.cookies.token;
@@ -54,34 +72,112 @@ app.get("/Admin", varifyUser, (req, res) => {
   res.json("Success");
 });
 
-app.post("/Login", (req, res) => {
-  // res.header("Access-Control-Allow-Origin", "*");
-  const { email, password } = req.body;
-  UserModel.findOne({ email: email }).then((user) => {
-    if (user) {
-      bcrypt.compare(password, user.password, (err, response) => {
-        if (response) {
-          const token = jwt.sign(
-            { email: user.email, role: user.role },
-            "jwt-secret-key",
-            { expiresIn: "1d" }
-          );
-          res.status(200).cookie("token", token, {
-            sameSite: "none",
-            secure: true,
-            httpOnly: true,
-          });
-          // Cookies.set('jwt-secret-key', token)
-          return res.json({ Status: "Success", role: user.role, token: token });
-        } else {
-          return res.status(200).send({ message: "Password incorrect" });
-        }
-      });
-    } else {
-      res.json("No record existed");
+const isAuth = (req, res, next) => {
+  if (req.session.isAuth) {
+    next();
+  } else {
+    res.send("<script>window.location='/Login';</script>");
+  }
+};
+
+// app.post("/Login", (req, res) => {
+//   // res.header("Access-Control-Allow-Origin", "*");
+//   const { email, password } = req.body;
+//   UserModel.findOne({ email: email }).then((user) => {
+//     if (user) {
+//       bcrypt.compare(password, user.password, (err, response) => {
+//         if (response) {
+//           const token = jwt.sign(
+//             { email: user.email, role: user.role },
+//             "jwt-secret-key",
+//             { expiresIn: "1d" }
+//           );
+//           res.status(200).cookie("token", token, {
+//             sameSite: "none",
+//             secure: true,
+//             httpOnly: true,
+//           });
+//           // Cookies.set('jwt-secret-key', token)
+//           req.session.isAuth = true;
+//           return res.json({ Status: "Success", role: user.role, token: token });
+//         } else {
+//           return res.status(200).send({ message: "Password incorrect" });
+//         }
+//       });
+//     } else {
+//       res.json("No record existed");
+//     }
+//   });
+// });
+
+app.post("/Login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find the user by email
+    const user = await UserModel.findOne({ email: email });
+
+    if (!user) {
+      // User doesn't exist
+      return res.status(404).json({ message: "No record existed" });
     }
+
+    // Compare the provided password with the hashed password in the database
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (passwordMatch) {
+      // Password is correct; create a JWT token
+      const token = jwt.sign(
+        { email: user.email, role: user.role },
+        "jwt-secret-key",
+        { expiresIn: "1d" }
+      );
+
+      // Set the token as a cookie
+      res.cookie("token", token, {
+        sameSite: "none",
+        secure: true,
+        httpOnly: true,
+      });
+
+      req.session.isAuth = true;
+      return res
+        .status(200)
+        .json({ status: "Success", role: user.role, token: token });
+    } else {
+      // Password is incorrect
+      return res.status(401).json({ message: "Password incorrect" });
+    }
+  } catch (err) {
+    // Handle any unexpected errors
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.post("/Logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) throw err;
+    res.send("<script>window.location='/Login';</script>");
   });
 });
+
+// app.post("/Logout", async (req, res) => {
+//   try {
+//     await new Promise((resolve, reject) => {
+//       req.session.destroy((err) => {
+//         if (err) {
+//           reject(err);
+//         } else {
+//           resolve();
+//         }
+//       });
+//     });
+//     res.redirect("/Login");
+//   } catch (err) {
+//     console.error("Error destroying session:", err);
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
 
 app.post("/Register", async (req, res) => {
   const { email, firstname, lastname, password } = req.body;
@@ -116,7 +212,11 @@ app.post("/Register", async (req, res) => {
   }
 });
 
-router.get("/:id/verify/:token", async (req, res) => {
+app.get("/dashboard", (req, res) => {
+  res.send("<script>window.location='/Home';</script>");
+});
+
+app.put("/users/:id/verify/:token", async (req, res) => {
   try {
     const user = await UserModel.findByOne({
       _id: req.params.id,
@@ -129,7 +229,7 @@ router.get("/:id/verify/:token", async (req, res) => {
       userId: user._id,
       token: req.params.token,
     });
-    if (!token) return res.status(400).send({ message: "Invalid link" });
+    if (!token) return res.status(400).send({ message: "Error" });
     await UserModel.updateOne({ _id: user._id, verified: true });
     await token.remove();
 
@@ -148,22 +248,60 @@ app.get("/Count", (req, res) => {
     .catch((err) => console.log(err));
 });
 
-// app.post("/Home", async (req, res) => {
-//     await UserSchedules.create(req.body).then(todos => res.json(todos)).catch(err => res.json(err))
-// })
+app.get("/getTask/:taskNo/", (req, res) => {
+  const task = req.params.taskNo;
+  UserSchedules.findOne({ taskNo: task })
+    .then((task) => {
+      if (task) {
+        res.json(task);
+      } else {
+        res.status(404).json({ error: "Task not found" });
+      }
+    })
+    .catch((err) => console.log(err));
+});
+
+app.put("/Update/:taskNo", async (req, res) => {
+  try {
+    const taskNo = req.params.taskNo;
+
+    UserSchedules.findOneAndUpdate(
+      { taskNo: taskNo },
+      {
+        date: req.body.date,
+        title: req.body.title,
+        description: req.body.description,
+      },
+      { new: true }
+    )
+      .then((todos) => {
+        if (!todos) {
+          return res.status(404).json({ error: "Task not found" });
+        }
+
+        res.json(todos);
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({ error: "Internal Server Error" });
+      });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 app.post("/Home", async (req, res) => {
   try {
-    const latestTask = await UserSchedules.findOne(
-      {},
-      {},
-      { sort: { taskNo: -1 } }
-    );
+    const tasks = await UserSchedules.find({}, {}, { sort: { taskNo: 1 } });
 
     let newTaskNo = 1;
 
-    if (latestTask && latestTask.taskNo) {
-      newTaskNo = latestTask.taskNo + 1;
+    for (const task of tasks) {
+      if (task.taskNo !== newTaskNo) {
+        break;
+      }
+      newTaskNo++;
     }
 
     const newTask = {
@@ -182,6 +320,7 @@ app.post("/Home", async (req, res) => {
 
 app.delete("/deleteTask/:taskNo", async (req, res) => {
   const taskNo = req.params.taskNo;
+
   try {
     const deletedTask = await UserSchedules.findByIdAndDelete(taskNo);
     if (!deletedTask) {
