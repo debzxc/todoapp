@@ -13,11 +13,24 @@ export default function Login() {
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
   const Navigate = useNavigate();
+  const [authenticated, setAuthenticated] = useState(false);
 
   // const axiosInstance = axios.create({
   axios.defaults.withCredentials = true;
   //   withCredentials: true,
   // });
+
+  useEffect(() => {
+    // Perform an initial check for authentication status when the component mounts
+    axios
+      .get("http://localhost:3001/auth-check")
+      .then((res) => {
+        if (res.data.status === "authenticated") {
+          setAuthenticated(true);
+        }
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();

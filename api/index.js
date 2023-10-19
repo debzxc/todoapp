@@ -72,13 +72,13 @@ app.get("/Admin", varifyUser, (req, res) => {
   res.json("Success");
 });
 
-const isAuth = (req, res, next) => {
-  if (req.session.isAuth) {
-    next();
-  } else {
-    res.send("<script>window.location='/Login';</script>");
-  }
-};
+// const isAuth = (req, res, next) => {
+//   if (req.session.isAuth) {
+//     next();
+//   } else {
+//     res.send("<script>window.location='/Login';</script>");
+//   }
+// };
 
 // app.post("/Login", (req, res) => {
 //   // res.header("Access-Control-Allow-Origin", "*");
@@ -151,6 +151,14 @@ app.post("/Login", async (req, res) => {
   } catch (err) {
     // Handle any unexpected errors
     return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/auth-check", (req, res) => {
+  if (req.session.isAuth) {
+    return res.json({ status: "authenticated" });
+  } else {
+    res.send("<script>window.location='/Login';</script>");
   }
 });
 

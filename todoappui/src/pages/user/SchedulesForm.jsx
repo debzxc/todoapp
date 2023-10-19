@@ -18,6 +18,21 @@ export default function Home(props) {
   const [count, setCount] = useState(null);
   const [todos, setTodos] = useState([]);
   const Navigate = useNavigate();
+  const [authenticated, setAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Perform an initial check for authentication status when the component mounts
+    axios
+      .get("http://localhost:3001/auth-check")
+      .then((res) => {
+        if (res.data.status === "authenticated") {
+          setAuthenticated(true);
+        } else if (!res.data.status) {
+          Navigate("/Login");
+        }
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   const Submit = (e) => {
     e.preventDefault();
