@@ -15,7 +15,7 @@ export default function Admin() {
         if (res.data === "Success") {
           setSuccess("Succeeded!");
         } else {
-          console.log("Error");
+          navigate("/Login");
         }
       })
       .catch((err) => console.log(err));

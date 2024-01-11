@@ -11,6 +11,7 @@ import LandingPage from "./pages/LandingPage";
 import EmailVerification from "./pages/EmailVerify/verifyEmail";
 import UpdateSchedules from "./pages/UpdateSchedules";
 import DashBoard from "./pages/DashBoard";
+import { AuthContextProvider } from "./pages/user/AuthContext";
 
 function App() {
   return (

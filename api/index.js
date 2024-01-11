@@ -41,7 +41,8 @@ const store = new mongoDBSession({
 
 app.use(
   session({
-    secret: "secret key",
+    secret: "some secret",
+    cookie: { maxAge: 30000 },
     resave: false,
     saveUninitialized: false,
     store: store,
@@ -59,7 +60,6 @@ const varifyUser = (req, res, next) => {
       } else {
         if (decoded.role === "admin") {
           next();
-          //    return res.json("admin")
         } else {
           return res.json("not admin");
         }
@@ -72,45 +72,65 @@ app.get("/Admin", varifyUser, (req, res) => {
   res.json("Success");
 });
 
-// const isAuth = (req, res, next) => {
-//   if (req.session.isAuth) {
+// const isAuthenticated = (req, res, next) => {
+//   const session_token = req.session.isAuth;
+//   const token = req.cookies.token;
+//   if (!session_token) {
+//     return res.json("Session is not authenticated");
+//   } else if (session_token) {
 //     next();
 //   } else {
-//     res.send("<script>window.location='/Login';</script>");
+//     res.json("Error User");
 //   }
 // };
 
-// app.post("/Login", (req, res) => {
-//   // res.header("Access-Control-Allow-Origin", "*");
-//   const { email, password } = req.body;
-//   UserModel.findOne({ email: email }).then((user) => {
-//     if (user) {
-//       bcrypt.compare(password, user.password, (err, response) => {
-//         if (response) {
-//           const token = jwt.sign(
-//             { email: user.email, role: user.role },
-//             "jwt-secret-key",
-//             { expiresIn: "1d" }
-//           );
-//           res.status(200).cookie("token", token, {
-//             sameSite: "none",
-//             secure: true,
-//             httpOnly: true,
-//           });
-//           // Cookies.set('jwt-secret-key', token)
-//           req.session.isAuth = true;
-//           return res.json({ Status: "Success", role: user.role, token: token });
-//         } else {
-//           return res.status(200).send({ message: "Password incorrect" });
-//         }
-//       });
-//     } else {
-//       res.json("No record existed");
-//     }
-//   });
-// });
+// if (!token) {
+//   return res.json("Token is missing");
+// } else {
+//   jwt.verify(token, "jwt-secret-key", (err, decoded) => {
+//     if (err) {
+//       return res.json("Error with token");
+//     } else {} });
 
-app.post("/Login", async (req, res) => {
+// const isAuthenticated = (req, res, next) => {
+//   // const token = req.cookies.token;
+//   const userRole = req.user.role;
+//   const session_token = req.session.isAuth;
+
+//   if (userRole === "Visitor") {
+//     if (!session_token) {
+//       return res.json("Session is not authenticated");
+//     } else if (session_token) {
+//       next();
+//     } else {
+//       res.json("Error User");
+//     }
+//   } else {
+//     return res.json("not auth");
+//   }
+// };
+
+const isAuthenticated = (req, res, next) => {
+  // const user = req.user; // Assuming that user information is available in the request
+
+  // if (!user) {
+  //   return res.status(401).json({ message: "Unauthorized" });
+  // }
+
+  // const userRole = user.role;
+  const sessionToken = req.session.isAuth;
+  if (sessionToken) {
+    next();
+  } else {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+};
+
+app.get("/userVerify", isAuthenticated, (req, res) => {
+  res.json("Authenticated");
+});
+
+app.post("/Login", async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -133,6 +153,8 @@ app.post("/Login", async (req, res) => {
         { expiresIn: "1d" }
       );
 
+      const session = (req.session.isAuth = true);
+
       // Set the token as a cookie
       res.cookie("token", token, {
         sameSite: "none",
@@ -140,10 +162,19 @@ app.post("/Login", async (req, res) => {
         httpOnly: true,
       });
 
-      req.session.isAuth = true;
-      return res
-        .status(200)
-        .json({ status: "Success", role: user.role, token: token });
+      res.cookie("connect.sid", session, {
+        sameSite: "none",
+        secure: true,
+        httpOnly: true,
+      });
+
+      return res.status(200).json({
+        status: "Success",
+        role: user.role,
+        user: user.email,
+        token: token,
+        session: session,
+      });
     } else {
       // Password is incorrect
       return res.status(401).json({ message: "Password incorrect" });
@@ -154,38 +185,46 @@ app.post("/Login", async (req, res) => {
   }
 });
 
-app.get("/auth-check", (req, res) => {
-  if (req.session.isAuth) {
-    return res.json({ status: "authenticated" });
-  } else {
-    res.send("<script>window.location='/Login';</script>");
+app.get("/auth-check", isAuthenticated, (req, res) => {
+  return res.json({ status: "authenticated" });
+});
+
+app.get("/loggedIn", async (req, res) => {
+  try {
+    const req_token = await req.cookies.token;
+    console.log("Received token:", req_token);
+
+    if (!req_token) {
+      console.log("No token found, returning false");
+      return res.json(false);
+    }
+
+    jwt.verify(req_token, process.env.JWT_SECRET);
+    console.log("Token verification successful, returning true");
+    res.send(true);
+  } catch (err) {
+    console.error("Error during token verification:", err);
+    res.json(false);
   }
 });
 
 app.post("/Logout", (req, res) => {
   req.session.destroy((err) => {
-    if (err) throw err;
-    res.send("<script>window.location='/Login';</script>");
+    if (err) {
+      console.error("Error destroying session:", err);
+      return res.status(500).send("Internal Server Error");
+    }
+
+    res
+      .cookie("token", "", {
+        httpOnly: true,
+        expires: new Date(0),
+        secure: true,
+        sameSite: "none",
+      })
+      .send("<script>window.location='/Login';</script>");
   });
 });
-
-// app.post("/Logout", async (req, res) => {
-//   try {
-//     await new Promise((resolve, reject) => {
-//       req.session.destroy((err) => {
-//         if (err) {
-//           reject(err);
-//         } else {
-//           resolve();
-//         }
-//       });
-//     });
-//     res.redirect("/Login");
-//   } catch (err) {
-//     console.error("Error destroying session:", err);
-//     res.status(500).send("Internal Server Error");
-//   }
-// });
 
 app.post("/Register", async (req, res) => {
   const { email, firstname, lastname, password } = req.body;
@@ -250,6 +289,7 @@ app.get("/Home", (req, res) => {
     .then((todos) => res.json(todos))
     .catch((err) => console.log(err));
 });
+
 app.get("/Count", (req, res) => {
   UserSchedules.countDocuments({})
     .then((count) => res.json({ count }))
@@ -313,6 +353,7 @@ app.post("/Home", async (req, res) => {
     }
 
     const newTask = {
+      userEmail: req.body.userEmail,
       taskNo: newTaskNo,
       title: req.body.title,
       date: req.body.date,

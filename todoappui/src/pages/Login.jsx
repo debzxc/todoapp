@@ -20,17 +20,17 @@ export default function Login() {
   //   withCredentials: true,
   // });
 
-  useEffect(() => {
-    // Perform an initial check for authentication status when the component mounts
-    axios
-      .get("http://localhost:3001/auth-check")
-      .then((res) => {
-        if (res.data.status === "authenticated") {
-          setAuthenticated(true);
-        }
-      })
-      .catch((err) => console.error(err));
-  }, []);
+  // useEffect(() => {
+  //   // Perform an initial check for authentication status when the component mounts
+  //   axios
+  //     .get("http://localhost:3001/auth-check")
+  //     .then((res) => {
+  //       if (res.data.status === "authenticated") {
+  //         setAuthenticated(true);
+  //       }
+  //     })
+  //     .catch((err) => console.error(err));
+  // }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -41,13 +41,15 @@ export default function Login() {
       })
       .then((res) => {
         console.log(res.data);
-        if (res.data.status === "Success") {
-          if (res.data.role === "admin") {
-            Navigate("/Admin");
-          } else if (res.data.role === "Visitor") {
+        if (res.data.session === true) {
+          if (res.data.role === "Visitor") {
+            localStorage.setItem("LOGGED_IN_USER", res.data.user);
+            localStorage.setItem("USER_ROLE", res.data.role);
+            localStorage.setItem("SESSION", res.data.session);
+            localStorage.setItem("LOGGED_IN", true);
             Navigate("/Home");
           } else {
-            alert("Error");
+            console.log("Error User login");
           }
         } else if (res.data.message === "Password incorrect") {
           alert("Password is incorrect");
@@ -58,6 +60,14 @@ export default function Login() {
       })
       .catch((err) => console.error(err));
   };
+
+  // if (res.data.status === "Success") {
+  //   if (res.data.role === "admin") {
+  //     Navigate("/Admin");
+  //   } else {
+  //     console.log("Error Login");
+  //   }
+  // } else
 
   return (
     <>
